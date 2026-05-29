@@ -1,6 +1,6 @@
 # Contract DSL Reference
 
-AgentAssert Type-C contracts are YAML files that define behavioral invariants for AI agents. Version `dsl_version: "0.4"` adds 7 **process operators** for agentic flow control.
+AgentAssert Type-C contracts are YAML files that define behavioral invariants for AI agents. Version `dsl_version: "0.4"` (compatible with v0.6.x) defines 10 contract operators comprising 7 **process operators** and 3 **content operators** for agentic flow control.
 
 ---
 
@@ -48,7 +48,7 @@ All fields except `contractspec`, `kind`, `name`, `description`, and `version` a
 
 ---
 
-## The 7 Process Operators (v0.4)
+## The 10 Process and Content Operators (v0.6.x)
 
 ### 1. `tool_blocklist` — Hard
 
@@ -206,6 +206,74 @@ LLM-as-judge for qualitative rules that can't be expressed as deterministic oper
 | `cost_ceiling_usd_per_session` | `float` | Max spend on judge calls. Default: 0.10. Set 0.0 for free models. |
 
 Judge routing: `ds-flash-free` (default, $0) → `haiku` (paid) → skip (fail-safe). Judges never block on failure — fail-open preserves user flow.
+
+### 8. `pii_filter` — Hard / Soft
+
+Enforces PII redaction or blocking. Matches common patterns or custom regular expressions.
+
+```yaml
+- pii_filter:
+    patterns: ["email", "phone", "ssn", "credit_card", "api_key", "ip_address"]
+    action: redact                 # "log", "warn", "redact", "block"
+    streaming_action: warn         # "log", "warn" (since redaction is not supported on raw streams)
+    custom_patterns:
+      - name: "custom_uuid"
+        regex: "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `patterns` | `list[str]` | List of default pattern groups to check: `email`, `phone`, `ssn`, `credit_card`, `api_key`, `ip_address`. |
+| `action` | `str` | Response action on standard API completion: `"log"`, `"warn"`, `"redact"` (replaces text with `[REDACTED_...]`), `"block"` (blocks with `ContractBreachError`). Default: `"log"`. |
+| `streaming_action` | `str` | Response action on streaming responses (SSE). Supports: `"log"`, `"warn"`. Default: `"log"`. |
+| `custom_patterns` | `list[dict]` | Custom regular expressions. Must contain `name` and `regex` keys. |
+
+---
+
+### 9. `cost_ceiling` — Hard / Soft
+
+Limits the accumulated USD cost of a session. Automatically calculates costs for Anthropic, OpenAI, and Gemini models using response tokens or metadata.
+
+```yaml
+- cost_ceiling:
+    max_usd_per_session: 5.0
+    action_on_breach: deny         # "deny", "warn", "log"
+    price_per_million_input: 15.0  # Optional fallback override
+    price_per_million_output: 75.0 # Optional fallback override
+    provider_price_map:            # Optional custom price rates overrides per model
+      "claude-3-5-sonnet":
+        input: 3.0
+        output: 15.0
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `max_usd_per_session` | `float` | Maximum session budget in USD. |
+| `action_on_breach` | `str` | Action when cost exceeds the budget: `"deny"` (blocks future turns), `"warn"` (emits warnings), `"log"` (records silently). Default: `"warn"`. |
+| `price_per_million_input` | `float` | Fallback price rate in USD per million input tokens. |
+| `price_per_million_output` | `float` | Fallback price rate in USD per million output tokens. |
+| `provider_price_map` | `dict` | Custom model price overrides (map of model name to input/output rates per million tokens). |
+
+---
+
+### 10. `repetition_guard` — Hard / Soft
+
+Detects repetitive loops or duplicate statements in assistant output or actions.
+
+```yaml
+- repetition_guard:
+    window_size: 5
+    max_repeats: 3
+    action: deny                   # "deny", "warn", "log"
+    ignore_tools: ["Read", "Edit"]  # Tool calls to exclude from loop check
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `window_size` | `int` | Number of previous turns/actions to remember for comparison. Default: 5. |
+| `max_repeats` | `int` | Maximum allowed matching messages or actions within the window. Default: 3. |
+| `action` | `str` | Action on breach: `"deny"` (blocks request), `"warn"` (warns), `"log"` (records). Default: `"deny"`. |
+| `ignore_tools` | `list[str]` | List of tool names that are allowed to repeat. |
 
 ---
 

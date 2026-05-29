@@ -25,7 +25,7 @@ brew install agentassert-typec
 ## Start the Proxy
 
 ```bash
-agentassert-proxy proxy start --contract contract.yaml --port 9000 --host 127.0.0.1
+agentassert-proxy proxy start --contract contract.yaml --port 9000 --host 127.0.0.1 --session-id default
 ```
 
 | Flag | Default | Description |
@@ -33,6 +33,20 @@ agentassert-proxy proxy start --contract contract.yaml --port 9000 --host 127.0.
 | `--contract`, `-c` | *(required)* | Path to contract YAML file |
 | `--port`, `-p` | `9000` | Port to listen on |
 | `--host`, `-h` | `127.0.0.1` | Host to bind to |
+| `--session-id`, `-s` | `None` | Custom session ID for DB isolation (creates a separate database file per ID) |
+| `--no-persist` | `False` | Disables SQLite session persistence, executing entirely in-memory |
+
+---
+
+## SQLite Session Persistence (v0.6.x)
+
+By default, the proxy automatically persists agent state variables to a local SQLite database to prevent loss of compliance history during restarts.
+
+- **Storage Location**: Databases are saved inside the `~/.agentassert/sessions/` directory.
+- **File Naming**: Named after the slugified contract name, suffixed with the optional `--session-id` (e.g. `safety-minimal_default.db`).
+- **Engine performance**: Operates in WAL (Write-Ahead Logging) mode, utilizing a non-blocking background thread to batch-flush dirty state changes every 5 seconds.
+- **Isolating Sessions**: Use a unique `--session-id` for different tasks or developers to prevent state/metrics contamination.
+- **Disabling Persistence**: Run with the `--no-persist` flag to work purely in-memory (useful for automated testing runs).
 
 ---
 
@@ -106,9 +120,42 @@ Edit `contract.yaml` while the proxy is running — it picks up changes automati
 
 | Path | Description |
 |---|---|
-| `GET /health` | Health check — returns JSON status |
-| `GET /status` | Proxy status — contract, uptime, sessions |
+| `GET /health` | Health check — returns status, theta score, and persistence database details |
+| `GET /status` | Proxy status — JSD drift stats, accumulated session cost, and violations count |
 | `POST /admin/reload` | Force contract reload from disk |
+
+### `/health` JSON Response Example
+```json
+{
+  "status": "ok",
+  "contract": "safety-minimal",
+  "theta": 1.0,
+  "upstream": "defaults",
+  "persistence": {
+    "enabled": true,
+    "db_path": "/Users/user/.agentassert/sessions/safety-minimal_default.db",
+    "dirty": false
+  }
+}
+```
+
+### `/status` JSON Response Example
+```json
+{
+  "theta": 1.0,
+  "drift": {
+    "jsd": 0.05,
+    "window": 10
+  },
+  "violations": 0,
+  "cost": {
+    "accumulated_usd": 0.045,
+    "ceiling_usd": 1.0,
+    "remaining_usd": 0.955,
+    "pct_used": 4.5
+  }
+}
+```
 
 ```bash
 # Check proxy health

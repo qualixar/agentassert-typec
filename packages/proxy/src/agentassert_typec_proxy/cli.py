@@ -65,7 +65,7 @@ def start(contract: str, port: int, host: str, session_id: str | None, no_persis
         click.echo(f"Error: Contract file not found: {contract_path}", err=True)
         sys.exit(1)
 
-    click.echo("AgentAssert Type-C Proxy v0.6.0")
+    click.echo("AgentAssert Type-C Proxy v0.6.1")
     click.echo(f"Contract: {contract_path}")
     click.echo(f"Listening on http://{host}:{port}")
     if no_persist:

@@ -62,101 +62,142 @@ That's it. Every API call your agent makes now passes through formal contract en
 
 ### Claude Code
 
-Claude Code reads `ANTHROPIC_BASE_URL` natively. No config file changes needed.
+Claude Code reads `ANTHROPIC_BASE_URL` natively, or can use the native hook adapter.
 
+**Option A: HTTP Proxy (Zero Code Change)**
 ```bash
-# Install and start proxy
-pip install agentassert-typec-proxy
-agentassert-proxy proxy start --contract partner-mode.yaml --port 9000
-
-# In a new terminal, point Claude Code at the proxy
+# In your terminal profile or active session:
 export ANTHROPIC_BASE_URL=http://localhost:9000/anthropic
 
-# Start Claude Code as normal
+# Start Claude Code normally
 claude
 ```
 
-**Or use the native hook adapter** (zero proxy, deep integration with Claude Code's hook system):
-
+**Option B: Hook Adapter (Deep Hook Integration)**
 ```bash
 pip install agentassert-typec-claude-code
-
-# Installs hooks into ~/.claude/settings.json automatically
-agentassert-claude-code install --contract partner-mode.yaml
-
-# Verify
-agentassert-claude-code status
+agentassert-claude-code install --contract safety-minimal.yaml
 ```
-
-The hook adapter integrates with `PreToolUse`, `PostToolUse`, `UserPromptSubmit`, and `Stop` events — the same hook system Claude Code uses natively.
-
-Three contract templates ship out of the box:
-- `safety-minimal` — blocks destructive tools only
-- `partner-mode` — enforces L99 conviction, cost-state-before-paid-API, no-MVP suggestions
-- `full-governance` — all 7 operators, full drift detection + LLM-as-judge
+The hook adapter integrates with Claude Code's native hook system (`PreToolUse`, `PostToolUse`, etc.) without requiring a proxy process.
 
 ---
 
 ### Antigravity (Antigravity IDE)
 
-Antigravity IDE uses DeepSeek V4 Pro and Gemini APIs. The proxy intercepts both via `OPENAI_BASE_URL` (DeepSeek is OpenAI-compatible) and `GEMINI_BASE_URL`.
+Antigravity IDE routes DeepSeek (OpenAI-compatible) and Gemini API calls. Set environment variables to intercept both:
 
 ```bash
-pip install agentassert-typec-proxy
-agentassert-proxy proxy start --contract safety-minimal.yaml --port 9000
-
-# Add to your Antigravity environment or shell profile
+# Intercept DeepSeek calls (OpenAI shape)
 export OPENAI_BASE_URL=http://localhost:9000/openai
+
+# Intercept Gemini calls
 export GEMINI_BASE_URL=http://localhost:9000/gemini
 ```
 
-Restart Antigravity — all model calls now flow through the contract layer.
+Start the proxy using a contract containing the required limits (e.g., safety, cost ceiling):
+```bash
+agentassert-proxy proxy start --contract safety-minimal.yaml --port 9000
+```
+Restart your Antigravity environment to apply.
+
+---
+
+### CommandCode
+
+CommandCode (`cmd-mimo`, `cmd-ds`) uses global MCP and standard provider client configurations. To intercept all calls, point CommandCode's environment variables to the proxy:
+
+```bash
+export ANTHROPIC_BASE_URL=http://localhost:9000/anthropic
+export OPENAI_BASE_URL=http://localhost:9000/openai
+export GEMINI_BASE_URL=http://localhost:9000/gemini
+export OPENROUTER_BASE_URL=http://localhost:9000/openrouter
+```
+Add these to your shell profile (e.g., `~/.zshrc`) so CommandCode sessions automatically load the proxy endpoints.
+
+---
+
+### Hermes CLI
+
+Hermes (`hermes -z` or interactive) configuration lives in `~/.hermes/config.yaml`. Update the upstream URLs to route through the proxy:
+
+```yaml
+# Add / modify in ~/.hermes/config.yaml:
+providers:
+  openai:
+    base_url: "http://127.0.0.1:9000/openai/v1"
+  anthropic:
+    base_url: "http://127.0.0.1:9000/anthropic/v1"
+  gemini:
+    base_url: "http://127.0.0.1:9000/gemini/v1"
+  openrouter:
+    base_url: "http://127.0.0.1:9000/openrouter/v1"
+```
+
+Alternatively, export the environment variables (e.g., `ANTHROPIC_BASE_URL`, `OPENAI_BASE_URL`) before launching Hermes.
 
 ---
 
 ### Cursor
 
-Cursor supports custom base URLs for its underlying API calls. Set them in Cursor's environment or your shell profile:
+To run Cursor with contract governance:
 
+**Option A: Global Environment (Command Line Launch)**
+Export base URLs in your terminal and launch Cursor from the same session:
 ```bash
-pip install agentassert-typec-proxy
-agentassert-proxy proxy start --contract safety-minimal.yaml --port 9000
-
-# In ~/.zshrc or ~/.bashrc
-export OPENAI_BASE_URL=http://localhost:9000/openai
 export ANTHROPIC_BASE_URL=http://localhost:9000/anthropic
+export OPENAI_BASE_URL=http://localhost:9000/openai
+cursor .
 ```
 
-Restart Cursor. For Cursor with Claude backend, all API calls are now contract-governed.
+**Option B: Cursor settings UI**
+1. Navigate to **Cursor Settings** -> **Models** -> **Custom API Keys / Base URLs**.
+2. Enter the proxy endpoints:
+   - OpenAI Compatible: `http://localhost:9000/openai/v1`
+   - Anthropic: `http://localhost:9000/anthropic/v1`
 
 ---
 
 ### Windsurf
 
-Windsurf (Codeium) uses the Anthropic and OpenAI API shapes. Same pattern:
+Windsurf's Cascade agent respects standard API base URLs:
 
+**Option A: Environment Variables**
 ```bash
-pip install agentassert-typec-proxy
-agentassert-proxy proxy start --contract safety-minimal.yaml --port 9000
-
 export ANTHROPIC_BASE_URL=http://localhost:9000/anthropic
 export OPENAI_BASE_URL=http://localhost:9000/openai
+windsurf .
 ```
 
-Windsurf's Cascade agent calls now flow through your contract.
+**Option B: Settings UI**
+In Windsurf Settings -> **AI Configurations** -> **Custom Endpoints**:
+- OpenAI Base URL: `http://localhost:9000/openai/v1`
+- Anthropic Base URL: `http://localhost:9000/anthropic/v1`
 
 ---
 
-### Cline (VS Code)
+### OpenClaw
 
-Cline supports configuring the API base URL directly in its settings. Set it to `http://localhost:9000/anthropic` (or the relevant provider endpoint):
+Configure OpenClaw's proxy endpoints in your `openclaw_config.json`:
 
-```bash
-pip install agentassert-typec-proxy
-agentassert-proxy proxy start --contract safety-minimal.yaml --port 9000
+```json
+{
+  "anthropic_base_url": "http://localhost:9000/anthropic/v1",
+  "openai_base_url": "http://localhost:9000/openai/v1"
+}
 ```
+Or run the OpenClaw service with environment variables set (`export ANTHROPIC_BASE_URL=...`).
 
-In Cline's VS Code settings → API Configuration → set Base URL to `http://localhost:9000/anthropic`.
+---
+
+### Cline (VS Code Extension)
+
+Route Cline calls through the proxy:
+1. Open the Cline panel in VS Code and click the Settings icon.
+2. Under **API Provider**, select **OpenAI Compatible** or **Anthropic**.
+3. Set **Base URL** to:
+   - OpenAI compatible: `http://localhost:9000/openai/v1`
+   - Anthropic: `http://localhost:9000/anthropic/v1`
+4. Set any dummy API key (e.g., `sk-assert-key`) as the proxy handles key routing.
 
 ---
 
@@ -205,6 +246,7 @@ agentassert-typec proxy start --contract contract.yaml
 brew install agentassert-typec
 agentassert-proxy proxy start --contract safety-minimal.yaml
 ```
+
 
 ---
 
@@ -290,7 +332,7 @@ satisfaction:
 
 ---
 
-## The 7 Contract Operators
+## The 10 Contract Operators
 
 | Operator | Type | Trigger | What It Does |
 |---|---|---|---|
@@ -301,6 +343,9 @@ satisfaction:
 | `context_budget` | Configurable | ContextWindow | Warn / deny / compress on token limit breach |
 | `process_drift` | Soft | TurnEnd | JSD on action distributions, configurable action |
 | `judge_predicate` | Soft + sampled | Async | LLM-as-judge rubric evaluation, cost-capped |
+| `pii_filter` | Hard / Soft | TurnEnd / PostAction | Redacts or blocks standard/custom PII patterns |
+| `cost_ceiling` | Hard / Soft | PreAction / PostAction | Limits maximum session budget in USD (with token cost auto-calc) |
+| `repetition_guard` | Hard / Soft | TurnEnd / PostAction | Detects and blocks/warns on repetitive loops or actions |
 
 **Hard violations:** block the API call immediately, return a `ContractBreachError`.  
 **Soft violations:** apply a Θ reliability penalty, log the incident, let the call through.

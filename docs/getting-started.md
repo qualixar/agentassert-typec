@@ -39,14 +39,97 @@ Start the proxy:
 agentassert-proxy proxy start --contract contract.yaml --port 9000
 ```
 
-Point your agent at it:
+Point your agent at it. The proxy acts as a drop-in replacement by intercepting provider HTTP requests. Configure your favorite tool as follows:
 
+### 1. Claude Code
+Point Claude Code to the proxy by setting the base URL in your terminal before launching:
+```bash
+export ANTHROPIC_BASE_URL=http://localhost:9000/anthropic
+claude
+```
+*Note:* Every model call and tool execution made by Claude Code will now pass through the contract evaluation engine.
+
+### 2. Antigravity IDE
+Antigravity IDE targets both Gemini and DeepSeek (via OpenAI endpoint). Intercept both by exporting:
+```bash
+# Point OpenAI-compatible requests (like DeepSeek Pro) to proxy
+export OPENAI_BASE_URL=http://localhost:9000/openai
+
+# Point Gemini requests to proxy
+export GEMINI_BASE_URL=http://localhost:9000/gemini
+```
+Ensure your terminal session or workspace runtime inherits these environment variables before starting the agent.
+
+### 3. CommandCode
+To govern CommandCode (`cmd-mimo`, `cmd-ds`), configure the environment variables globally:
 ```bash
 export ANTHROPIC_BASE_URL=http://localhost:9000/anthropic
 export OPENAI_BASE_URL=http://localhost:9000/openai
 export GEMINI_BASE_URL=http://localhost:9000/gemini
 export OPENROUTER_BASE_URL=http://localhost:9000/openrouter
 ```
+Adding this to your shell profile (`~/.zshrc` or `~/.bash_profile`) guarantees that CommandCode's local models and downstream APIs are intercepted.
+
+### 4. Hermes CLI
+To intercept Hermes CLI agent requests, update `~/.hermes/config.yaml` to specify proxy upstream URLs:
+```yaml
+# ~/.hermes/config.yaml
+providers:
+  openai:
+    base_url: "http://127.0.0.1:9000/openai/v1"
+  anthropic:
+    base_url: "http://127.0.0.1:9000/anthropic/v1"
+  gemini:
+    base_url: "http://127.0.0.1:9000/gemini/v1"
+  openrouter:
+    base_url: "http://127.0.0.1:9000/openrouter/v1"
+```
+Or start the hermes command with env variables configured (`export ANTHROPIC_BASE_URL=...`).
+
+### 5. Cursor
+To route Cursor's AI queries through AgentAssert:
+- **Terminal Launch**: Set base URLs in terminal and start Cursor from there:
+  ```bash
+  export ANTHROPIC_BASE_URL=http://localhost:9000/anthropic
+  export OPENAI_BASE_URL=http://localhost:9000/openai
+  cursor .
+  ```
+- **UI Configuration**: Alternatively, go to **Settings** -> **Models** -> **Custom API Keys / Base URLs** and supply:
+  - OpenAI: `http://localhost:9000/openai/v1`
+  - Anthropic: `http://localhost:9000/anthropic/v1`
+
+### 6. Windsurf
+Cascade agent in Windsurf respects proxy configuration:
+- **Terminal Launch**:
+  ```bash
+  export ANTHROPIC_BASE_URL=http://localhost:9000/anthropic
+  export OPENAI_BASE_URL=http://localhost:9000/openai
+  windsurf .
+  ```
+- **UI Settings**: Go to **Windsurf Settings** -> **AI Configurations** -> **Custom Endpoints**:
+  - OpenAI Compatible Base URL: `http://localhost:9000/openai/v1`
+  - Anthropic Compatible Base URL: `http://localhost:9000/anthropic/v1`
+
+### 7. OpenClaw
+Edit your local `openclaw_config.json` to route through the proxy:
+```json
+{
+  "anthropic_base_url": "http://localhost:9000/anthropic/v1",
+  "openai_base_url": "http://localhost:9000/openai/v1"
+}
+```
+Or run the OpenClaw service inside a shell where the base URLs are exported.
+
+### 8. Cline (VS Code Extension)
+In the Cline panel:
+1. Click the **Settings** icon.
+2. Under **API Provider**, select **OpenAI Compatible** or **Anthropic**.
+3. Configure the **Base URL**:
+   - OpenAI compatible: `http://localhost:9000/openai/v1`
+   - Anthropic compatible: `http://localhost:9000/anthropic/v1`
+4. Enter any placeholder text for API Key (the proxy forwards the real ones automatically).
+
+---
 
 All provider API calls now flow through the contract layer. No code changes needed.
 

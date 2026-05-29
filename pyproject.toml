@@ -1,6 +1,6 @@
 [project]
 name = "agentassert-typec"
-version = "0.5.0"
+version = "0.6.1"
 description = "AgentAssert Type-C — formal behavioral contracts for AI agents"
 requires-python = ">=3.12"
 dependencies = []
