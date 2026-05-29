@@ -17,9 +17,7 @@ jobs:
       - uses: astral-sh/setup-uv@v3
         with:
           python-version: ${{ matrix.python }}
-      - run: uv sync --all-packages --all-extras
+      - run: uv sync --group dev
       - run: uv run ruff check packages/
-      - run: uv run --directory packages/core pytest tests/ -q --cov=agentassert_typec_core --cov-fail-under=100
-      - run: uv run --directory packages/proxy pytest tests/ -q
-      - run: uv run --directory packages/sdk pytest tests/ -q
-      - run: uv run --directory packages/claude-code pytest tests/ -q
+      - run: uv run pytest packages/core/tests/ -q --cov=agentassert_typec_core --cov-fail-under=100
+      - run: uv run pytest packages/proxy/tests/ packages/sdk/tests/ packages/claude-code/tests/ -q

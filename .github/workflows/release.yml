@@ -7,14 +7,12 @@ on:
 jobs:
   publish-pypi:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
       - name: Build all packages
         run: |
-          uv sync --all-packages
+          uv sync --group dev
           uv run python -m build packages/core
           uv run python -m build packages/proxy
           uv run python -m build packages/sdk
@@ -23,6 +21,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: packages/*/dist/
+          password: ${{ secrets.PYPI_TOKEN }}
 
   build-binary:
     strategy:
