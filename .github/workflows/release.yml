@@ -22,6 +22,7 @@ jobs:
         with:
           packages-dir: packages/*/dist/
           password: ${{ secrets.PYPI_TOKEN }}
+          skip-existing: true
 
   build-binary:
     strategy:
