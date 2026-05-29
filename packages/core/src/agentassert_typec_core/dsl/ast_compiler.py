@@ -23,6 +23,13 @@ class CompiledContract:
     hard_checks: list[Any] = field(default_factory=list)
     soft_checks: list[Any] = field(default_factory=list)
 
+    # Phase 3: content operators
+    pii_compiled_patterns: list[tuple[str, re.Pattern]] = field(default_factory=list)
+    pii_filter_config: Any | None = None        # PiiFilter | None
+    cost_ceiling_config: Any | None = None      # CostCeiling | None
+    repetition_guard_config: Any | None = None  # RepetitionGuard | None
+    repetition_guard_ignore_patterns: list[re.Pattern] = field(default_factory=list)
+
     @classmethod
     def from_spec(cls, spec: ContractSpecExtended) -> "CompiledContract":
         c = cls(spec=spec)
@@ -86,6 +93,31 @@ class CompiledContract:
                 "action_on_fail": jp.action_on_fail,
                 "cost_ceiling": jp.cost_ceiling_usd_per_session,
             })
+
+        # Phase 3: pii_filter
+        if proc.pii_filter:
+            from agentassert_typec_core.evaluator.pii_patterns import _PII_PATTERNS
+            self.pii_filter_config = proc.pii_filter
+            for group in proc.pii_filter.patterns:
+                rx = re.compile(_PII_PATTERNS[group.value].pattern, re.IGNORECASE)
+                self.pii_compiled_patterns.append((group.value, rx))
+            for custom in proc.pii_filter.custom_patterns:
+                rx = re.compile(custom.regex)
+                self.pii_compiled_patterns.append((custom.name, rx))
+
+        # Phase 3: cost_ceiling
+        if proc.cost_ceiling:
+            self.cost_ceiling_config = proc.cost_ceiling
+
+        # Phase 3: repetition_guard
+        if proc.repetition_guard:
+            self.repetition_guard_config = proc.repetition_guard
+            for tool in proc.repetition_guard.ignore_tools:
+                rx = re.compile(
+                    re.escape(tool).replace(r"\*", ".*"),
+                    re.IGNORECASE,
+                )
+                self.repetition_guard_ignore_patterns.append(rx)
 
     def _compile_abc_checks(self) -> None:
         if not self.spec.invariants:

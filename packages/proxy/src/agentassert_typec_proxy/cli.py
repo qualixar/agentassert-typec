@@ -51,15 +51,27 @@ def cli():
 @click.option("--contract", "-c", required=True, help="Path to contract YAML")
 @click.option("--port", "-p", default=9000, help="Port to listen on")
 @click.option("--host", "-h", default="127.0.0.1", help="Host to bind to")
-def start(contract: str, port: int, host: str) -> None:
+@click.option(
+    "--session-id", "-s", default=None,
+    help="Session ID for DB isolation (creates separate .db file per ID)",
+)
+@click.option(
+    "--no-persist", is_flag=True, default=False,
+    help="Disable SQLite session persistence (in-memory only, like v0.5.x)",
+)
+def start(contract: str, port: int, host: str, session_id: str | None, no_persist: bool) -> None:
     contract_path = Path(contract).resolve()
     if not contract_path.exists():
         click.echo(f"Error: Contract file not found: {contract_path}", err=True)
         sys.exit(1)
 
-    click.echo("AgentAssert Type-C Proxy v0.5.0")
+    click.echo("AgentAssert Type-C Proxy v0.6.0")
     click.echo(f"Contract: {contract_path}")
     click.echo(f"Listening on http://{host}:{port}")
+    if no_persist:
+        click.echo("Persistence: disabled (--no-persist)")
+    else:
+        click.echo(f"Persistence: enabled (session_id={session_id or 'default'})")
     click.echo()
     _warn_if_upstream_mismatch(contract_path)
     click.echo("Set these env vars in your agent environment:")
@@ -76,7 +88,11 @@ def start(contract: str, port: int, host: str) -> None:
         host=host,
         port=port,
         factory=True,
-        kwargs={"contract_path": str(contract_path)},
+        kwargs={
+            "contract_path": str(contract_path),
+            "session_id": session_id,
+            "persist": not no_persist,
+        },
         loop="uvloop",
         log_level="info",
     )

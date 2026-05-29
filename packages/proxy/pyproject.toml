@@ -1,6 +1,6 @@
 [project]
 name = "agentassert-typec-proxy"
-version = "0.5.0"
+version = "0.6.0"
 description = "AgentAssert Type-C HTTP forwarding proxy — formal behavioral contracts middleware for any AI agent, any provider."
 readme = "README.md"
 license = "MIT"
@@ -18,7 +18,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
-    "agentassert-typec-core>=0.4.2,<0.5",
+    "agentassert-typec-core>=0.6.0,<0.7",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
     "httpx>=0.28",

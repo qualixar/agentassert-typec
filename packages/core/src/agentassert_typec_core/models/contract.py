@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -173,6 +174,49 @@ class JudgePredicate(_FrozenModel):
     cost_ceiling_usd_per_session: float = Field(0.10, ge=0.0)
 
 
+# --- Phase 3: Content Operators ---
+
+class PiiPatternGroup(str, Enum):
+    email = "email"
+    phone = "phone"
+    ssn = "ssn"
+    credit_card = "credit_card"
+    api_key = "api_key"
+    ip_address = "ip_address"
+
+
+class CustomPiiPattern(_FrozenModel):
+    name: str
+    regex: str
+
+
+class PiiFilter(_FrozenModel):
+    patterns: list[PiiPatternGroup] = [PiiPatternGroup.email, PiiPatternGroup.phone]
+    action: Literal["log", "warn", "redact", "block"] = "log"
+    streaming_action: Literal["log", "warn"] = "log"
+    custom_patterns: list[CustomPiiPattern] = []
+
+
+class ProviderPriceEntry(_FrozenModel):
+    input: float = Field(gt=0.0)   # USD per million tokens
+    output: float = Field(gt=0.0)
+
+
+class CostCeiling(_FrozenModel):
+    max_usd_per_session: float = Field(gt=0.0)
+    action_on_breach: Literal["deny", "warn", "log"] = "warn"
+    price_per_million_input: float | None = None
+    price_per_million_output: float | None = None
+    provider_price_map: dict[str, ProviderPriceEntry] = {}
+
+
+class RepetitionGuard(_FrozenModel):
+    window_size: int = Field(5, ge=2, le=50)
+    max_repeats: int = Field(3, ge=2, le=100)
+    action: Literal["deny", "warn", "log"] = "deny"
+    ignore_tools: list[str] = []
+
+
 # --- Process Invariants container ---
 
 class ProcessInvariants(_FrozenModel):
@@ -183,6 +227,10 @@ class ProcessInvariants(_FrozenModel):
     context_budget: ContextBudget | None = None
     process_drift: ProcessDrift | None = None
     judge_predicate: list[JudgePredicate] = []
+    # Phase 3: content operators (all optional, None = disabled)
+    pii_filter: PiiFilter | None = None
+    cost_ceiling: CostCeiling | None = None
+    repetition_guard: RepetitionGuard | None = None
 
 
 # --- Extended Invariants (adds process to ABC) ---
@@ -204,7 +252,7 @@ class InvariantsExtended(_FrozenModel):
 
 
 def _list_to_process_invariants(ops: list[dict[str, Any]]) -> dict[str, Any]:
-    result: dict[str, list[Any]] = {
+    result: dict[str, Any] = {
         "must_precede": [],
         "must_state": [],
         "tool_blocklist": [],
@@ -228,6 +276,13 @@ def _list_to_process_invariants(ops: list[dict[str, Any]]) -> dict[str, Any]:
             result["context_budget"] = op["context_budget"]
         if "process_drift" in op:
             result["process_drift"] = op["process_drift"]
+        # Phase 3: content operators (singular — last one wins)
+        if "pii_filter" in op:
+            result["pii_filter"] = op["pii_filter"]
+        if "cost_ceiling" in op:
+            result["cost_ceiling"] = op["cost_ceiling"]
+        if "repetition_guard" in op:
+            result["repetition_guard"] = op["repetition_guard"]
     return result
 
 

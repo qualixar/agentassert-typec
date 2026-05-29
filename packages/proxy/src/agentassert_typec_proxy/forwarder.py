@@ -64,13 +64,18 @@ def provider_url(
     return _PROVIDER_DEFAULTS.get(provider, "")
 
 
+_HOP_BY_HOP: frozenset[str] = frozenset([
+    "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
+    "te", "trailers", "transfer-encoding", "upgrade", "host",
+])
+
+
 def _forward_headers(raw_request: Request, provider: str) -> dict[str, str]:
-    headers: dict[str, str] = {}
-    for header in ["authorization", "x-api-key", "anthropic-version", "anthropic-beta", "content-type", "openai-beta"]:
-        value = raw_request.headers.get(header)
-        if value:
-            headers[header] = value
-    return headers
+    return {
+        k.lower(): v
+        for k, v in raw_request.headers.items()
+        if k.lower() not in _HOP_BY_HOP
+    }
 
 
 async def forward_request(

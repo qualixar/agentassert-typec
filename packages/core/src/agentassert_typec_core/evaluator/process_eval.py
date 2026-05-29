@@ -34,6 +34,62 @@ def evaluate_tool_blocklist(
     return None
 
 
+def evaluate_must_precede(
+    event: PreAction,
+    compiled: CompiledContract,
+    seen_session: set[str],
+    seen_turn: set[str],
+    violations: ViolationLog,
+) -> DecisionResult | None:
+    tool = event.tool
+    for rule in compiled.must_precede_rules:
+        if rule["after"] != tool:
+            continue
+        seen = seen_session if rule["scope"] == "session" else seen_turn
+        if rule["before"] not in seen:
+            reason = (
+                f"ContractBreach: must_precede — '{rule['before']}' must be called "
+                f"before '{tool}' (scope={rule['scope']})"
+            )
+            violations.record(
+                name="must_precede",
+                event_type="PreAction",
+                tool=tool,
+                reason=reason,
+            )
+            return DecisionResult(
+                decision=TypeCDecision.DENY,
+                reason=reason,
+                violation_name="must_precede",
+            )
+    return None
+
+
+def evaluate_tool_allowlist(
+    event: PreAction,
+    compiled: CompiledContract,
+    violations: ViolationLog,
+) -> DecisionResult | None:
+    if not compiled.tool_allowlist_patterns:
+        return None
+    tool = event.tool
+    for _scope, patterns in compiled.tool_allowlist_patterns:
+        for pattern in patterns:
+            if pattern.search(tool):
+                return None
+    violations.record(
+        name="tool_allowlist",
+        event_type="PreAction",
+        tool=tool,
+        reason=f"Tool '{tool}' not in any allowlist",
+    )
+    return DecisionResult(
+        decision=TypeCDecision.DENY,
+        reason=f"ContractBreach: tool_allowlist — '{tool}' is not permitted",
+        violation_name="tool_allowlist",
+    )
+
+
 def evaluate_must_state(
     event: PreAction,
     compiled: CompiledContract,
