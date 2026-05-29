@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish-pypi:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - name: Build all packages
+        run: |
+          uv sync --all-packages
+          uv run python -m build packages/core
+          uv run python -m build packages/proxy
+          uv run python -m build packages/sdk
+          uv run python -m build packages/claude-code
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/*/dist/
+
+  build-binary:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            arch: arm64
+            binary: agentassert-proxy-macos-arm64
+          - os: macos-13
+            arch: x86_64
+            binary: agentassert-proxy-macos-x86_64
+          - os: ubuntu-latest
+            arch: x86_64
+            binary: agentassert-proxy-linux-x86_64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - name: Install PyInstaller
+        run: uv run pip install pyinstaller
+      - name: Build binary
+        run: |
+          uv run pyinstaller --onefile --name ${{ matrix.binary }} \
+            --add-data "packages/core/src/agentassert_typec_core:agentassert_typec_core" \
+            --hidden-import agentassert_typec_core \
+            packages/proxy/src/agentassert_typec_proxy/cli.py
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/${{ matrix.binary }}

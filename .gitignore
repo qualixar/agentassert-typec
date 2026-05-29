@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Testing / coverage
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Ruff
+.ruff_cache/
+
+# Type checkers
+.mypy_cache/
+.pyright/
+pyrightconfig.json
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Build artifacts
+*.whl
+*.tar.gz
+
+# Internal / working docs
+.backup/
+.commandcode/
+
+# Secrets
+.env
+*.env

@@ -1,0 +1,14 @@
+{
+  "name": "agentassert-typec",
+  "version": "0.4.0",
+  "description": "AgentAssert Type-C — formal behavioral contracts for AI agents. Run with npx.",
+  "bin": {
+    "agentassert-typec": "./index.js"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "keywords": ["ai-agents", "behavioral-contracts", "agentassert", "typec"],
+  "license": "MIT",
+  "repository": "https://github.com/qualixar/agentassert-typec"
+}

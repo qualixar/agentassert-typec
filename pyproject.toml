@@ -1,0 +1,32 @@
+[project]
+name = "agentassert-typec"
+version = "0.4.0"
+description = "AgentAssert Type-C — formal behavioral contracts for AI agents"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv.workspace]
+members = ["packages/core", "packages/proxy", "packages/sdk", "packages/claude-code"]
+
+[tool.uv.sources]
+agentassert-typec-core = { workspace = true }
+agentassert-typec-proxy = { workspace = true }
+agentassert-typec-sdk = { workspace = true }
+agentassert-typec-claude-code = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "agentassert-typec-core",
+    "agentassert-typec-proxy",
+    "agentassert-typec-sdk",
+    "agentassert-typec-claude-code",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
+    "ruff>=0.9",
+    "httpx>=0.27",
+    "anthropic>=0.40",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
