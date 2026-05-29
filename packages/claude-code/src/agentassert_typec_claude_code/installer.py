@@ -24,6 +24,11 @@ def install(contract_path: str, force: bool = False) -> None:
     print()
     print("Add this to your shell config (~/.zshrc or ~/.bashrc):")
     print(f"  export AGENTASSERT_CONTRACT={contract_path}")
+    print()
+    import sys
+    if sys.stdout.isatty():
+        print("⭐  If AgentAssert Type-C is useful, please star the repo:")
+        print("    https://github.com/qualixar/agentassert-typec")
 
 
 def uninstall() -> None:

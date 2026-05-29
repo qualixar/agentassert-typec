@@ -22,7 +22,7 @@ def start(contract: str, port: int, host: str) -> None:
         click.echo(f"Error: Contract file not found: {contract_path}", err=True)
         sys.exit(1)
 
-    click.echo("AgentAssert Type-C Proxy v0.4.0")
+    click.echo("AgentAssert Type-C Proxy v0.4.2")
     click.echo(f"Contract: {contract_path}")
     click.echo(f"Listening on http://{host}:{port}")
     click.echo()
@@ -30,6 +30,10 @@ def start(contract: str, port: int, host: str) -> None:
     click.echo(f"  export ANTHROPIC_BASE_URL=http://{host}:{port}/anthropic")
     click.echo(f"  export OPENAI_BASE_URL=http://{host}:{port}/openai")
     click.echo()
+    if sys.stdout.isatty():
+        click.echo("⭐  If AgentAssert Type-C is useful, please star the repo:")
+        click.echo("    https://github.com/qualixar/agentassert-typec")
+        click.echo()
 
     uvicorn.run(
         "agentassert_typec_proxy.server:create_app",
