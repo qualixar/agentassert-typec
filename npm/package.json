@@ -1,6 +1,6 @@
 {
   "name": "agentassert-typec",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "description": "AgentAssert Type-C — formal behavioral contracts for AI agents. Run with npx.",
   "bin": {
     "agentassert-typec": "./index.js"

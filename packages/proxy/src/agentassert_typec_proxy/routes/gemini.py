@@ -21,4 +21,4 @@ async def gemini_generate(request: Request, model: str) -> Response:
     session_id = request.headers.get("X-AgentAssert-Session", str(uuid.uuid4()))
     request_id = str(uuid.uuid4())
     canonical = normalize_gemini(payload, session_id, request_id)
-    return await enforce_and_forward(canonical, monitor, request)
+    return await enforce_and_forward(canonical, monitor, request, request.app.state.upstream_overrides)

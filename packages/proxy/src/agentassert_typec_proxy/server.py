@@ -11,6 +11,18 @@ from agentassert_typec_proxy.hot_reload import ContractWatcher
 from agentassert_typec_proxy.routes import anthropic, openai, gemini, openrouter
 
 
+def _extract_upstream(monitor: SessionMonitor) -> dict[str, str] | None:
+    upstream = getattr(monitor._contract, "upstream", None)
+    if upstream is None:
+        return None
+    result = {}
+    for provider in ("anthropic", "openai", "gemini", "openrouter"):
+        url = getattr(upstream, provider, None)
+        if url:
+            result[provider] = url
+    return result or None
+
+
 def create_app(contract_path: str) -> FastAPI:
     monitor_store: dict = {}
 
@@ -23,6 +35,7 @@ def create_app(contract_path: str) -> FastAPI:
 
         monitor_store["monitor"] = monitor
         app.state.monitor = monitor
+        app.state.upstream_overrides = _extract_upstream(monitor)
 
         watcher = ContractWatcher(contract_path)
         watcher.set_monitor(monitor)
@@ -52,6 +65,7 @@ def create_app(contract_path: str) -> FastAPI:
             "status": "ok",
             "contract": monitor._contract.name,
             "theta": monitor._theta.compute(),
+            "upstream": request.app.state.upstream_overrides or "defaults",
         }
 
     @app.get("/status")
@@ -73,6 +87,7 @@ def create_app(contract_path: str) -> FastAPI:
         new_monitor = watcher.swap_if_pending()
         if new_monitor:
             request.app.state.monitor = new_monitor
+            request.app.state.upstream_overrides = _extract_upstream(new_monitor)
             return JSONResponse({"status": "reloaded", "contract": new_monitor._contract.name})
         return JSONResponse({"status": "no_change"})
 

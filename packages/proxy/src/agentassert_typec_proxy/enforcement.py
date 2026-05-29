@@ -19,6 +19,7 @@ async def enforce_and_forward(
     monitor: SessionMonitor,
     raw_request: Request,
     provider_path: str = "/v1/messages",
+    upstream_overrides: dict[str, str] | None = None,
 ) -> JSONResponse | StreamingResponse:
     tool_name = _extract_tool_name(canonical)
     pre_event = PreAction(
@@ -48,7 +49,7 @@ async def enforce_and_forward(
         )
 
     if canonical.stream:
-        return await _forward_streaming(canonical, monitor, pre_event, raw_request, provider_path)
+        return await _forward_streaming(canonical, monitor, pre_event, raw_request, provider_path, upstream_overrides)
 
     try:
         provider = canonical.provider
@@ -57,6 +58,7 @@ async def enforce_and_forward(
             payload=canonical.raw_payload,
             raw_request=raw_request,
             path=provider_path,
+            upstream_overrides=upstream_overrides,
         )
     except Exception as e:
         return JSONResponse(
@@ -92,6 +94,7 @@ async def _forward_streaming(
     pre_event: PreAction,
     raw_request: Request,
     provider_path: str,
+    upstream_overrides: dict[str, str] | None = None,
 ) -> StreamingResponse:
     try:
         provider = canonical.provider
@@ -100,6 +103,7 @@ async def _forward_streaming(
             payload=canonical.raw_payload,
             raw_request=raw_request,
             path=provider_path,
+            upstream_overrides=upstream_overrides,
         )
     except Exception as e:
         return JSONResponse(

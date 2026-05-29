@@ -231,6 +231,23 @@ def _list_to_process_invariants(ops: list[dict[str, Any]]) -> dict[str, Any]:
     return result
 
 
+# --- Upstream Provider URL Overrides (v0.5) ---
+
+class UpstreamConfig(_FrozenModel):
+    """Override the default LLM provider URLs the proxy forwards to.
+
+    Use this when your LLM client is configured to talk to a non-standard
+    endpoint (e.g., DeepSeek's Anthropic-compatible API, a local LLM, or
+    any OpenAI-compatible backend).
+
+    Priority: contract upstream > TYPEC_UPSTREAM_* env var > ANTHROPIC_BASE_URL/OPENAI_BASE_URL > built-in default.
+    """
+    anthropic: str | None = None  # e.g. https://api.deepseek.com/anthropic
+    openai: str | None = None     # e.g. https://api.deepseek.com/v1
+    gemini: str | None = None     # e.g. https://generativelanguage.googleapis.com
+    openrouter: str | None = None # e.g. https://openrouter.ai/api
+
+
 # --- Root ContractSpecExtended ---
 
 class ContractSpecExtended(_FrozenModel):
@@ -248,3 +265,4 @@ class ContractSpecExtended(_FrozenModel):
     satisfaction: SatisfactionParams | None = None
     drift: DriftConfig | None = None
     reliability: ReliabilityConfig | None = None
+    upstream: UpstreamConfig | None = None

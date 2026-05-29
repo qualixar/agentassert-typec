@@ -20,4 +20,4 @@ async def completions(request: Request) -> Response:
     session_id = request.headers.get("X-AgentAssert-Session", str(uuid.uuid4()))
     request_id = str(uuid.uuid4())
     canonical = normalize_openrouter(payload, session_id, request_id)
-    return await enforce_and_forward(canonical, monitor, request, "/v1/chat/completions")
+    return await enforce_and_forward(canonical, monitor, request, "/v1/chat/completions", "/v1/chat/completions", request.app.state.upstream_overrides)

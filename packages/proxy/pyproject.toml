@@ -1,6 +1,6 @@
 [project]
 name = "agentassert-typec-proxy"
-version = "0.4.3"
+version = "0.5.0"
 description = "AgentAssert Type-C HTTP forwarding proxy — formal behavioral contracts middleware for any AI agent, any provider."
 readme = "README.md"
 license = "MIT"

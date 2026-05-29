@@ -15,6 +15,7 @@ async def blocklist_client():
     app = create_app(str(FIXTURES / "safety-minimal.yaml"))
     monitor = SessionMonitor.from_yaml(str(FIXTURES / "safety-minimal.yaml"))
     app.state.monitor = monitor
+    app.state.upstream_overrides = None
     app.state.watcher = ContractWatcher(str(FIXTURES / "safety-minimal.yaml"))
     app.state.watcher.set_monitor(monitor)
     transport = ASGITransport(app=app)

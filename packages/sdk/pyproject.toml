@@ -1,6 +1,6 @@
 [project]
 name = "agentassert-typec-sdk"
-version = "0.4.3"
+version = "0.5.0"
 description = "AgentAssert Type-C SDK wrapper — wrap(Anthropic(), 'contract.yaml') to enforce behavioral contracts on direct API clients."
 readme = "README.md"
 license = "MIT"

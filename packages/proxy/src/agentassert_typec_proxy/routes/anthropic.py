@@ -22,7 +22,7 @@ async def messages(request: Request, path: str = "") -> Response:
     session_id = request.headers.get("X-AgentAssert-Session", str(uuid.uuid4()))
     request_id = str(uuid.uuid4())
     canonical = normalize_anthropic(payload, session_id, request_id)
-    return await enforce_and_forward(canonical, monitor, request, "/v1/messages")
+    return await enforce_and_forward(canonical, monitor, request, "/v1/messages", "/v1/messages", request.app.state.upstream_overrides)
 
 
 @router.api_route("/v1/messages/count_tokens", methods=["POST"])
