@@ -1,6 +1,6 @@
 [project]
 name = "agentassert-typec-claude-code"
-version = "0.4.1"
+version = "0.4.2"
 description = "AgentAssert Type-C Claude Code hook adapter — enforce behavioral contracts directly in Claude Code CLI."
 readme = "README.md"
 license = "MIT"
@@ -17,7 +17,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
-    "agentassert-typec-core>=0.4.1,<0.5",
+    "agentassert-typec-core>=0.4.2,<0.5",
     "click>=8.1",
 ]
 

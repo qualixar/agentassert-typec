@@ -18,7 +18,7 @@ members = [
 
 [[package]]
 name = "agentassert-typec"
-version = "0.4.1"
+version = "0.4.2"
 source = { virtual = "." }
 
 [package.dev-dependencies]
@@ -57,7 +57,7 @@ dev = [
 
 [[package]]
 name = "agentassert-typec-claude-code"
-version = "0.4.1"
+version = "0.4.2"
 source = { editable = "packages/claude-code" }
 dependencies = [
     { name = "agentassert-typec-core" },
@@ -83,7 +83,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "agentassert-typec-core"
-version = "0.4.1"
+version = "0.4.2"
 source = { editable = "packages/core" }
 dependencies = [
     { name = "numpy" },
@@ -137,7 +137,7 @@ provides-extras = ["otel", "dev"]
 
 [[package]]
 name = "agentassert-typec-proxy"
-version = "0.4.1"
+version = "0.4.2"
 source = { editable = "packages/proxy" }
 dependencies = [
     { name = "agentassert-typec-core" },
@@ -175,7 +175,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "agentassert-typec-sdk"
-version = "0.4.1"
+version = "0.4.2"
 source = { editable = "packages/sdk" }
 dependencies = [
     { name = "agentassert-typec-core" },
