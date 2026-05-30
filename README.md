@@ -15,7 +15,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![arXiv](https://img.shields.io/badge/arXiv-2602.22302-b31b1b.svg)](https://arxiv.org/abs/2602.22302)
-[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](packages/core)
+[![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen.svg)](packages/core)
+[![Tests](https://img.shields.io/badge/tests-292%20passed-brightgreen.svg)](packages/)
 [![Twitter](https://img.shields.io/badge/Twitter-@varunPbhardwaj-1DA1F2.svg)](https://twitter.com/varunPbhardwaj)
 
 ---
@@ -47,7 +48,7 @@ It is **not** a content filter (Guardrails AI does that). It is **not** an offli
 pip install agentassert-typec-proxy
 
 # Start the proxy with a safety contract
-agentassert-proxy proxy start --contract safety-minimal.yaml
+agentassert-proxy start --contract safety-minimal.yaml
 
 # Point your agent at it (works with any tool that reads env vars)
 export ANTHROPIC_BASE_URL=http://localhost:9000/anthropic
@@ -96,7 +97,7 @@ export GEMINI_BASE_URL=http://localhost:9000/gemini
 
 Start the proxy using a contract containing the required limits (e.g., safety, cost ceiling):
 ```bash
-agentassert-proxy proxy start --contract safety-minimal.yaml --port 9000
+agentassert-proxy start --contract safety-minimal.yaml --port 9000
 ```
 Restart your Antigravity environment to apply.
 
@@ -244,7 +245,7 @@ agentassert-typec proxy start --contract contract.yaml
 
 ```bash
 brew install agentassert-typec
-agentassert-proxy proxy start --contract safety-minimal.yaml
+agentassert-proxy start --contract safety-minimal.yaml
 ```
 
 
@@ -386,6 +387,39 @@ satisfaction:
 
 ---
 
+## Performance
+
+Type-C is designed to be invisible at runtime. Benchmarks run on Apple M5 Pro, Python 3.14, 1,000 iterations each.
+
+### Operator Evaluation Speed (all 10 operators, no API key needed)
+
+| Operator | Mean | p99 |
+|---|---|---|
+| `tool_blocklist` (deny path) | 0.8µs | 1.0µs |
+| `tool_blocklist` (allow path) | 0.3µs | 0.4µs |
+| `tool_allowlist` | 0.3µs | 0.3µs |
+| `must_precede` (deny path) | 0.8µs | 0.9µs |
+| `cost_ceiling` | 0.9µs | 1.0µs |
+| `repetition_guard` | 0.3µs | 0.3µs |
+| `pii_filter` (6 pattern types) | 0.2µs | 0.3µs |
+| `drift_tracker` update | 0.2µs | 0.3µs |
+| **All 10 operators combined** | **4.4µs** | **< 6µs** |
+
+**0.004ms total** for the full operator chain. Typical LLM response latency is 500–3,000ms — Type-C evaluation is < 0.1% of that.
+
+### Proxy Round-Trip Overhead (200 requests, mock upstream, no LLM cost)
+
+| Metric | Direct | Via Type-C | Added |
+|---|---|---|---|
+| Mean latency | 0.45ms | 1.30ms | **+0.85ms** |
+| p99 latency | 0.60ms | 1.90ms | **+1.30ms** |
+
+**+0.85ms mean overhead per request.** Invisible in practice — network RTT to any LLM provider alone exceeds this by 50–100×.
+
+Reproduce with: `uv run python scripts/bench_operators.py` and `uv run python scripts/bench_proxy_overhead.py`
+
+---
+
 ## The Math Behind the Contracts
 
 AgentAssert Type-C is backed by [arXiv:2602.22302](https://arxiv.org/abs/2602.22302) — *"Formal Behavioral Contracts for AI Agents"*.
@@ -409,7 +443,7 @@ Where C̄ = constraint satisfaction rate, D̄ = mean JSD drift, E = error rate, 
 You run a coding agent in production. One bad session could `rm -rf` a directory. The proxy blocks it before the API call is ever made.
 
 ```bash
-agentassert-proxy proxy start --contract safety-minimal.yaml
+agentassert-proxy start --contract safety-minimal.yaml
 export ANTHROPIC_BASE_URL=http://localhost:9000/anthropic
 ```
 
@@ -474,7 +508,7 @@ You want to catch low-conviction responses ("it depends", "either works") withou
 | Doc | Contents |
 |---|---|
 | [Getting Started](docs/getting-started.md) | All 5 integration paths with full examples |
-| [Contract DSL Reference](docs/contracts.md) | All 7 operators, YAML schema, examples |
+| [Contract DSL Reference](docs/contracts.md) | All 10 operators, YAML schema, examples |
 | [Proxy Guide](docs/proxy.md) | Multi-provider setup, streaming, hot reload |
 | [SDK Guide](docs/sdk.md) | Python SDK wrap, async, OpenAI + Anthropic |
 | [Claude Code Guide](docs/claude-code.md) | Hook adapter, templates, installer |
