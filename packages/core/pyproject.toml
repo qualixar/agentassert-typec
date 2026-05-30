@@ -1,6 +1,6 @@
 [project]
 name = "agentassert-typec-core"
-version = "0.6.1"
+version = "0.6.2"
 description = "AgentAssert Type-C kernel — formal behavioral contracts for AI agent harnesses. Provider-blind, transport-blind runtime enforcement."
 readme = "README.md"
 license = "MIT"

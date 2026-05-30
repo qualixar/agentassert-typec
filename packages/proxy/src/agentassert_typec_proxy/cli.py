@@ -65,7 +65,8 @@ def start(contract: str, port: int, host: str, session_id: str | None, no_persis
         click.echo(f"Error: Contract file not found: {contract_path}", err=True)
         sys.exit(1)
 
-    click.echo("AgentAssert Type-C Proxy v0.6.1")
+    from agentassert_typec_proxy._version import __version__
+    click.echo(f"AgentAssert Type-C Proxy v{__version__}")
     click.echo(f"Contract: {contract_path}")
     click.echo(f"Listening on http://{host}:{port}")
     if no_persist:
@@ -83,17 +84,16 @@ def start(contract: str, port: int, host: str, session_id: str | None, no_persis
         click.echo("    https://github.com/qualixar/agentassert-typec")
         click.echo()
 
+    from agentassert_typec_proxy.server import create_app
+    app = create_app(
+        contract_path=str(contract_path),
+        session_id=session_id,
+        persist=not no_persist,
+    )
     uvicorn.run(
-        "agentassert_typec_proxy.server:create_app",
+        app,
         host=host,
         port=port,
-        factory=True,
-        kwargs={
-            "contract_path": str(contract_path),
-            "session_id": session_id,
-            "persist": not no_persist,
-        },
-        loop="uvloop",
         log_level="info",
     )
 
